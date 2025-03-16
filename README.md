@@ -102,4 +102,4 @@ spring security 를 어떻게 이용하면 좋을까?
 
 
 </aside>
-![Image](assets/image.png)
+![Image](https://raw.githubusercontent.com/계정이름/리포지토리이름/main/assets/image.png)

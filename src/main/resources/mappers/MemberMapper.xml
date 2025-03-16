@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.basicsecurityv2.mapper.MemberMapper">
+
+    <resultMap id="memberResultMap" type="Member">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="password" column="password"/>
+        <result property="userName" column="user_name"/>
+        <result property="role" column="role"/>
+        <result property="oauthProvider" column="oauth_provider"/>
+    </resultMap>
+
+    <insert id="saved" parameterType="Member">
+        INSERT INTO member (user_id, password, user_name)
+        VALUES (#{userId}, #{password}, #{userName});
+    </insert>
+
+    <select id="findByUserId"
+            parameterType="String"
+            resultMap="memberResultMap">
+        SELECT id, user_id, password, user_name, role, oauth_provider
+        FROM member
+        WHERE user_id = #{userId};
+    </select>
+
+    <select id="findByUserIdAndProvider"
+            parameterType="map"
+            resultMap="memberResultMap">
+        SELECT id, user_id, password, user_name, role, oauth_provider
+        FROM member
+        WHERE user_id = #{userId} AND oauth_provider = #{oauthProvider};
+    </select>
+
+
+    <insert id="insertOAuthMember" parameterType="Member">
+        INSERT INTO member (user_id, user_name, oauth_provider)
+        VALUES (#{userId}, #{userName}, #{oauthProvider});
+    </insert>
+
+</mapper>

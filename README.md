@@ -123,6 +123,8 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
 위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지한다
 
+<br/><br/>
+
 **하지만 FormLogin 방식에는 단점이 많았다 주요 단점으로는**
 
 - 서버의 세션 관리 부담
@@ -133,6 +135,8 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     - 세션 기반 인증은 브라우저 중심으로 설계됨.
 - 서버가 상태를 유지해야 함
     - 서버가 다운되거나 재시작되면 로그인 세션도 사라지는 문제가 있음.
+
+<br/><br/>
 
 이러한 취약점들을 보완 한것이 JWT 기반 로그인 방식이다
 - 서버의 세션 관리 부담 → 브라우저에서 AccessToken 을 직접 관리

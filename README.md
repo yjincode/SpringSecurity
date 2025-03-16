@@ -111,9 +111,9 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 | `UserDetailsService` | DB에서 사용자 정보를 조회하는 서비스 |
 | `PasswordEncoder` | 비밀번호 암호화 및 비교 |
 | `SecurityContextHolder` | 인증 정보를 저장하는 컨텍스트 |
+
 <br/><br/>
 ### Spring Security 로그인 과정
-<br/>
 - 우선 Spring Security에서 가장 기본적인 **폼 로그인 (Form Login)** 방식
     1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
     2. Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
@@ -121,11 +121,10 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     4. 비밀번호 일치 여부 확인 (PasswordEncoder)
     5. 인증 성공하면 사용자 정보를 저장 (SecurityContextHolder)
     6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
-<br/>
 위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지한다
 
 **하지만 FormLogin 방식에는 단점이 많았다 주요 단점으로는**
-<br/>
+
 - 서버의 세션 관리 부담
     - 사용자가 많아지면 서버가 많은 세션을 관리해야 하므로 메모리 사용량이 증가.
 - CSRF(Cross-Site Request Forgery) 공격에 취약
@@ -134,14 +133,12 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     - 세션 기반 인증은 브라우저 중심으로 설계됨.
 - 서버가 상태를 유지해야 함
     - 서버가 다운되거나 재시작되면 로그인 세션도 사라지는 문제가 있음.
-<br/>
+
 이러한 취약점들을 보완 한것이 JWT 기반 로그인 방식이다
-<br/>
 - 서버의 세션 관리 부담 → 브라우저에서 AccessToken 을 직접 관리
 - CSRF 공격에 취약 →  요청마다 Authorization 헤더를 사용하고, 쿠키 기반 인증을 사용하지 않음
 - 모바일 앱과의 연동 어려움 → 모바일, 웹 에서 동일한 방식으로 인증 가능
 - 서버가 상태를 유지해야 함 → 서버는 JWT만 검증하고, 따로 인증을 저장하지 않음 (무상태 인증)
-<br/><br/>
 ### **JWT를 활용한 로그인 과정**
 <br/>
 - JWT 활용한 회원 인증 과정

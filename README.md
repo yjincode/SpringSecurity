@@ -121,154 +121,259 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 <br/>
 <br/>
 ### **Spring Security 로그인 과정 **
-우선 Spring Security에서 가장 기본적인 **폼 로그인 (Form Login)** 방식
-- 1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
-- 2. Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
-- 3. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
-- 4. 비밀번호 일치 여부 확인 (PasswordEncoder)
-- 5. 인증 성공하면 사용자 정보를 저장 (SecurityContextHolder)
-- 6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
 
-위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지함
+# Spring Security 구조 & OAuth2 활용한 네이버 아이디 로그인
+💡
 
-3️⃣ JWT를 활용한 로그인 과정
+### **Spring Security의 주요 컴포넌트**
 
-Spring Security의 기본 폼 로그인이 아닌, JWT(Json Web Token) 기반 로그인 방식을 적용할 수도 있어요. JWT 방식은 세션을 사용하지 않고, 토큰을 이용해 인증을 유지하는 방식이에요.
+Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 같은 주요 컴포넌트로 이루어져 있다
 
-✅ JWT 로그인 과정
+| 컴포넌트 | 역할 |
+| --- | --- |
+| `SecurityFilterChain` | 요청을 가로채고 여러 필터를 실행하는 보안 필터 체인 |
+| `UsernamePasswordAuthenticationFilter` | 로그인 요청을 처리하는 필터 |
+| `AuthenticationManager` | 인증 요청을 위임하는 관리자 |
+| `UserDetailsService` | DB에서 사용자 정보를 조회하는 서비스 |
+| `PasswordEncoder` | 비밀번호 암호화 및 비교 |
+| `SecurityContextHolder` | 인증 정보를 저장하는 컨텍스트 |
 
-사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+### Spring Security 로그인 과정
 
-Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
+- 우선 Spring Security에서 가장 기본적인 **폼 로그인 (Form Login)** 방식
+    1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+    2. Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
+    3. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+    4. 비밀번호 일치 여부 확인 (PasswordEncoder)
+    5. 인증 성공하면 사용자 정보를 저장 (SecurityContextHolder)
+    6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
 
-입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지한다
 
-비밀번호 일치 여부 확인 (PasswordEncoder)
+**하지만 FormLogin 방식에는 단점이 많았다 주요 단점으로는**
 
-인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
+- 서버의 세션 관리 부담
+    - 사용자가 많아지면 서버가 많은 세션을 관리해야 하므로 메모리 사용량이 증가.
+- CSRF(Cross-Site Request Forgery) 공격에 취약
+    - 세션 쿠키를 이용하는 방식이기 때문에 악의적인 요청이 사용자의 세션을 탈취할 가능성이 있음.
+- 모바일 앱과의 연동 어려움
+    - 세션 기반 인증은 브라우저 중심으로 설계됨.
+- 서버가 상태를 유지해야 함
+    - 서버가 다운되거나 재시작되면 로그인 세션도 사라지는 문제가 있음.
 
-이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
+이러한 취약점들을 보완 한것이 JWT 기반 로그인 방식이다
 
-서버에서는 JWT 필터(JwtAuthenticationFilter)를 통해 AccessToken 검증
+- 서버의 세션 관리 부담 → 브라우저에서 AccessToken 을 직접 관리
+- CSRF 공격에 취약 →  요청마다 Authorization 헤더를 사용하고, 쿠키 기반 인증을 사용하지 않음
+- 모바일 앱과의 연동 어려움 → 모바일, 웹 에서 동일한 방식으로 인증 가능
+- 서버가 상태를 유지해야 함 → 서버는 JWT만 검증하고, 따로 인증을 저장하지 않음 (무상태 인증)
 
-인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
+### **JWT를 활용한 로그인 과정**
 
-📌 JWT 방식은 서버에 세션을 저장하지 않고, 클라이언트가 토큰을 관리한다는 점이 핵심이에요!
+- JWT 활용한 회원 인증 과정
+    1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+    2. Spring Security가 로그인 요청을 가로챔 
+    3. 입력된 ID & PW를 DB에서 조회 ( UserDetailsService )
+    4. 비밀번호 일치 여부 확인 ( BCryptPasswordEncoder )
+    5. 인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
+    6. 이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
+    7. 서버에서는 ( TokenApiService ) 를 통해 AccessToken 검증
+    8. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
 
-Spring Security는 마치 회사의 출입 시스템과 같아요.
-- 회사 출입문에서 신분증을 확인 (사용자 인증)
-- 특정 부서만 출입 가능한 공간 제한 (인가)
-- 외부인이 함부로 들어오지 못하도록 보안 설정 (공격 방어)
+위의 과정을 이번에 만들어본 코드와 비교하면 아래와 같다
 
----
+1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+    
+    ```jsx
+    $('#signin').click(() => {
+            let userId = $('#user_id').val();
+            let password = $('#password').val();
+    
+            let formData = {
+                userId : userId,
+                password : password
+            }
+    
+            $.ajax({
+                type: 'POST',
+                url: '/login',
+                data: JSON.stringify(formData), // 데이터를 JSON 형식으로 변환
+                contentType: 'application/json; charset=utf-8', // 전송 데이터의 타입
+                dataType: 'json', // 서버에서 받을 데이터의 타입
+                success: (response) => {
+                    if(response.success){
+                        alert('로그인이 성공했습니다.');
+                        console.log(response);
+                        localStorage.setItem('accessToken', response.token);
+                        window.location.href = '/'
+                    } else {
+                        alert('아이디/비밀번호가 일치하지 않습니다.')
+                    }
+                },
+                error: (error) => {
+                    console.log('오류발생 : ', error);
+                    alert('로그인 중 오류가 발생했습니다.');
+                }
+            });
+    
+        });
+    ```
+    
 
-## 2️⃣ Spring Security 설정 예제 (`SecurityConfig.java`)
-```java
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf().disable() // CSRF 보호 비활성화 (테스트용)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/register").permitAll() // 로그인, 회원가입은 모두 허용
-                .anyRequest().authenticated() // 나머지는 로그인해야 접근 가능
-            )
-            .formLogin().loginPage("/login") // 로그인 페이지 지정
-            .and()
-            .logout().logoutUrl("/logout"); // 로그아웃 설정
-        return http.build();
+1. Spring Security가 로그인 요청을 가로챔 
+    
+    ```java
+      // form로그인 방식이아닌 jwt 인증을 먼저 수행하기 위해
+      // WebSecurityConfig 에서 
+      // UsernamePasswordAuthenticationFilter 보다 
+      // tokenAuthenticationFilter 가 먼저 동작하도록 설정 
+      
+       .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+    ```
+    
+2. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+    
+    ```java
+    @Service
+    @RequiredArgsConstructor
+    public class UserDetailServiceImpl implements UserDetailsService {
+    
+        private final MemberMapper memberMapper;
+    
+        @Override
+        public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+    
+            Member member = memberMapper.findByUserId(userId);
+            if (member == null) {
+                throw new UsernameNotFoundException(userId + " not found");
+            }
+    
+            return CustomUserDetails.builder()
+                    .member(member)
+                    .roles(List.of(member.getRole().name()))
+                    .build();
+        }
     }
-}
-```
-✅ **핵심 요약:** 위 코드에서 `/login`, `/register`는 인증 없이 접근할 수 있고, 나머지 페이지는 로그인해야 접근할 수 있어요!
-
----
-
-## 3️⃣ 네이버 로그인 (OAuth2) 쉽게 이해하기
-
-### ✅ **OAuth2 로그인 과정 (한눈에 보기)**
-1. 사용자가 **네이버 로그인 버튼 클릭** → 네이버 로그인 페이지로 이동
-2. 네이버에서 로그인 후 **Authorization Code 발급**
-3. Spring Boot가 Authorization Code를 받아 **네이버 서버에 Access Token 요청**
-4. 네이버가 **Access Token 발급** → Spring Boot가 사용자 정보 요청
-5. **네이버에서 사용자 정보 응답** (이름, 이메일 등) → 로그인 완료 🎉
-
-이제 코드를 통해 네이버 로그인을 설정해볼게요!
-
-### ✅ **네이버 로그인 설정 (`application.yml`)**
-```yaml
-spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          naver:
-            client-id: 네이버_CLIENT_ID
-            client-secret: 네이버_CLIENT_SECRET
-            client-authentication-method: post
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/naver"
-            scope: name, email, profile_image
-        provider:
-          naver:
-            authorization-uri: https://nid.naver.com/oauth2.0/authorize
-            token-uri: https://nid.naver.com/oauth2.0/token
-            user-info-uri: https://openapi.naver.com/v1/nid/me
-            user-name-attribute: response
-```
-✅ **핵심 요약:** 네이버 API를 통해 로그인할 때 필요한 정보(client-id, secret, API URL)를 설정해줘야 해요!
-
-### ✅ **Spring Security에서 OAuth2 적용 (`SecurityConfig.java`)**
-```java
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf().disable()
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/", "/login").permitAll()
-            .anyRequest().authenticated()
-        )
-        .oauth2Login()
-        .userInfoEndpoint()
-        .userService(customOAuth2UserService());
-    return http.build();
-}
-
-@Bean
-public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
-    return new CustomOAuth2UserService();
-}
-```
-✅ **핵심 요약:** Spring Security의 OAuth2 기능을 활성화하고, 네이버 로그인을 처리하는 `CustomOAuth2UserService`를 추가했어요!
-
-### ✅ **네이버 사용자 정보 조회 (`CustomOAuth2UserService.java`)**
-```java
-@Service
-public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                                     oAuth2User.getAttributes(), "response");
+    ```
+    
+3. 비밀번호 일치 여부 확인 ( BCryptPasswordEncoder )
+    
+    ```java
+    @Getter
+    public class SignUpRequestDTO {
+        private String userId;
+        private String userName;
+        private String password;
+    
+        public Member toMember(BCryptPasswordEncoder bCryptPasswordEncoder) {
+            return Member.builder()
+                    .userId(userId)
+                    .password(bCryptPasswordEncoder.encode(password))
+                    .userName(userName)
+                    .build();
+        }
     }
-}
-```
-✅ **핵심 요약:** 네이버에서 제공하는 사용자 정보를 받아와서 Spring Security에서 사용할 수 있도록 변환해요!
+    ```
+    
+    ```java
+    // WebSecurityConfig 에서 빈 주입
+     @Bean
+        public BCryptPasswordEncoder bCryptPasswordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
+    ```
+    
+4. 인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
+    
+    ```java
+    // MemberApiController
+        @PostMapping("/login")
+        public SignInResponseDTO login(@RequestBody SignInRequestDTO signInRequestDTO,
+                                       HttpServletResponse response) {
+            try {
+                Authentication authenticate = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                signInRequestDTO.getUserId(),
+                                signInRequestDTO.getPassword()
+                        )
+                );
+    
+                SecurityContextHolder.getContext().setAuthentication(authenticate);
+    
+                Member member = ((CustomUserDetails) authenticate.getPrincipal()).getMember();
+    
+                String accessToken = tokenProvider.generateToken(member, Duration.ofHours(2));
+                String refreshToken = tokenProvider.generateToken(member, Duration.ofDays(2));
+                CookieUtil.addCookie(response, "refreshToken", refreshToken, 7 * 24 * 60 * 60);
+    
+                return SignInResponseDTO.builder()
+                        .success(true)
+                        .token(accessToken)
+                        .build();
+            }catch (BadCredentialsException e) { // 아이디 비밀번호 불일치시 반환값
+                return SignInResponseDTO.builder()
+                        .success(false)
+                        .build();
+            }
+    }
+    ```
+    
+5. 이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
+    
+    ```jsx
+    let setupAjax = () => {
+        // 모든 Ajax 요청에 JWT Access Token을 포함.
+        $.ajaxSetup({
+            beforeSend: (xhr) => {
+                let token = localStorage.getItem('accessToken');
+                if (token) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token)
+                }
+            }
+        })
+    }
+    
+    // Ajax 요청시 브라우저의 로컬스토리지에서 가져온 엑세스토큰을 헤더에 포함시켜 보낸다
+    ```
+    
+6. 서버에서는( TokenApiService) 를 통해 AccessToken 검증
+7. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
+    
+    ```jsx
+    @Service
+    @RequiredArgsConstructor
+    public class TokenApiService {
+    
+        private final TokenProvider tokenProvider;
+    
+        public ResponseEntity<?> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+            String refreshToken = CookieUtil.getCookieValue(request, "refreshToken");
+    
+            if (refreshToken == null || tokenProvider.validToken(refreshToken) != 1) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body("Refresh Token이 유효하지 않습니다.");
+            }
+    
+            Member member = tokenProvider.getTokenDetails(refreshToken);
+    
+            String newAccessToken = tokenProvider.generateToken(member, Duration.ofHours(2));
+            String newRefreshToken = tokenProvider.generateToken(member, Duration.ofDays(2));
+    
+            CookieUtil.addCookie(response, "refreshToken", newRefreshToken, 7 * 24 * 60 * 60);
+    
+            response.setHeader(HttpHeaders.AUTHORIZATION, newAccessToken);
+    
+            return ResponseEntity.ok(
+                    SignInResponseDTO.builder()
+                            .token(newAccessToken)
+                            .build()
+            );
+        }
+    }
+    ```
+    
 
 ---
 
-## 🎯 **마무리 정리 (한눈에 요약!)**
-| 기능 | 핵심 개념 |
-|------|---------|
-| **Spring Security 로그인** | ID & 비밀번호를 검증하는 기본 로그인 방식 |
-| **OAuth2 네이버 로그인** | 네이버 API를 사용하여 로그인 처리 (Authorization Code → Access Token → 사용자 정보) |
-| **Security 설정** | `/login`, `/register`는 인증 없이 접근 가능, 나머지는 로그인 필요 |
-| **OAuth2 설정** | `application.yml`에서 네이버 API 설정 후, SecurityConfig에서 적용 |
-
-🎉 **이제 Spring Security와 네이버 로그인 구현 방법을 알았어요!**
-
-이 문서를 GitHub README에 올리면, 처음 배우는 사람도 쉽게 이해할 수 있을 거예요! 🚀🔥
-
-
+##

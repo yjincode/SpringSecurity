@@ -105,9 +105,9 @@ spring security 를 어떻게 이용하면 좋을까?
 
 </aside>
 ![Image](https://raw.githubusercontent.com/yjincode/SpringSecurity/main/assets/image.png)
+위 경로는 Spring Security 아키텍처
 
-
-### 🔹 **Spring Security의 주요 컴포넌트**
+### **Spring Security의 주요 컴포넌트**
 
 Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 같은 주요 컴포넌트로 이루어져 있다
 | 컴포넌트 | 역할 |
@@ -118,14 +118,42 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 | `UserDetailsService` | DB에서 사용자 정보를 조회하는 서비스 |
 | `PasswordEncoder` | 비밀번호 암호화 및 비교 |
 | `SecurityContextHolder` | 인증 정보를 저장하는 컨텍스트 |
+<br/>
+<br/>
+### **Spring Security 로그인 과정 **
+우선 Spring Security에서 가장 기본적인 **폼 로그인 (Form Login)** 방식
+- 1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+- 2. Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
+- 3. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+- 4. 비밀번호 일치 여부 확인 (PasswordEncoder)
+- 5. 인증 성공하면 사용자 정보를 저장 (SecurityContextHolder)
+- 6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
 
-### ✅ **Spring Security 로그인 과정 (한눈에 보기)**
-1. 사용자가 **ID, PW 입력 후 로그인 버튼 클릭** (`POST /login` 요청)
-2. Spring Security가 로그인 요청을 **가로챔** (`UsernamePasswordAuthenticationFilter`)
-3. 입력된 ID & PW를 **DB에서 조회** (`UserDetailsService`)
-4. 비밀번호 일치 여부 확인 (`PasswordEncoder`)
-5. 인증 성공하면 **사용자 정보를 저장** (`SecurityContextHolder`)
-6. 로그인 성공 후 **JWT 또는 세션 쿠키 발급**
+위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지함
+
+3️⃣ JWT를 활용한 로그인 과정
+
+Spring Security의 기본 폼 로그인이 아닌, JWT(Json Web Token) 기반 로그인 방식을 적용할 수도 있어요. JWT 방식은 세션을 사용하지 않고, 토큰을 이용해 인증을 유지하는 방식이에요.
+
+✅ JWT 로그인 과정
+
+사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
+
+Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
+
+입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+
+비밀번호 일치 여부 확인 (PasswordEncoder)
+
+인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
+
+이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
+
+서버에서는 JWT 필터(JwtAuthenticationFilter)를 통해 AccessToken 검증
+
+인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
+
+📌 JWT 방식은 서버에 세션을 저장하지 않고, 클라이언트가 토큰을 관리한다는 점이 핵심이에요!
 
 Spring Security는 마치 회사의 출입 시스템과 같아요.
 - 회사 출입문에서 신분증을 확인 (사용자 인증)

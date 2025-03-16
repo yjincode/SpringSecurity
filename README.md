@@ -9,9 +9,9 @@
 
 <br/><br/>
 
-[*Spring Security는 인증](https://docs.spring.io/spring-security/reference/features/authentication/index.html) , [권한 부여](https://docs.spring.io/spring-security/reference/features/authorization/index.html) 및 [일반적인 공격에 대한 보호를](https://docs.spring.io/spring-security/reference/features/exploits/index.html) 제공하는 프레임워크입니다 . _ 공식*
+[*Spring Security는 인증](https://docs.spring.io/spring-security/reference/features/authentication/index.html) , [권한 부여](https://docs.spring.io/spring-security/reference/features/authorization/index.html) 및 [일반적인 공격에 대한 보호를](https://docs.spring.io/spring-security/reference/features/exploits/index.html) 제공하는 프레임워크입니다 . _ 공식문서*
 
-<br/><br/><br/><br/>
+<br/><br/>
 
 
 1. **spring security 는**

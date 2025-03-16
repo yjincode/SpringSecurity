@@ -77,7 +77,7 @@ spring security 를 어떻게 이용하면 좋을까?
 
 <br/><br/><br/><br/>
 
-1. **소프트웨어 보안이란?**
+2. **소프트웨어 보안이란?**
 
 현재의 소프트웨어는 상당부분이 민감한 정보일 수 있는 대량의 데이터를 관리한다.
 
@@ -97,32 +97,6 @@ spring security 를 어떻게 이용하면 좋을까?
 
 
 # Spring Security 구조 & OAuth2 활용한 네이버 아이디 로그인
-
-<aside>
-💡
-
-### **Spring Security Architecture** ( 스프링 시큐리티의 구조 )
-
-</aside>
-![Image](https://raw.githubusercontent.com/yjincode/SpringSecurity/main/assets/image.png)
-위 경로는 Spring Security 아키텍처
-
-### **Spring Security의 주요 컴포넌트**
-
-Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 같은 주요 컴포넌트로 이루어져 있다
-| 컴포넌트 | 역할 |
-|---------|---------|
-| `SecurityFilterChain` | 요청을 가로채고 여러 필터를 실행하는 보안 필터 체인 |
-| `UsernamePasswordAuthenticationFilter` | 로그인 요청을 처리하는 필터 |
-| `AuthenticationManager` | 인증 요청을 위임하는 관리자 |
-| `UserDetailsService` | DB에서 사용자 정보를 조회하는 서비스 |
-| `PasswordEncoder` | 비밀번호 암호화 및 비교 |
-| `SecurityContextHolder` | 인증 정보를 저장하는 컨텍스트 |
-<br/>
-<br/>
-### **Spring Security 로그인 과정 **
-
-# Spring Security 구조 & OAuth2 활용한 네이버 아이디 로그인
 💡
 
 ### **Spring Security의 주요 컴포넌트**
@@ -137,9 +111,9 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 | `UserDetailsService` | DB에서 사용자 정보를 조회하는 서비스 |
 | `PasswordEncoder` | 비밀번호 암호화 및 비교 |
 | `SecurityContextHolder` | 인증 정보를 저장하는 컨텍스트 |
-
+<br/><br/>
 ### Spring Security 로그인 과정
-
+<br/>
 - 우선 Spring Security에서 가장 기본적인 **폼 로그인 (Form Login)** 방식
     1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
     2. Spring Security가 로그인 요청을 가로챔 (UsernamePasswordAuthenticationFilter)
@@ -147,11 +121,11 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     4. 비밀번호 일치 여부 확인 (PasswordEncoder)
     5. 인증 성공하면 사용자 정보를 저장 (SecurityContextHolder)
     6. 로그인 성공 후 세션 기반 인증 (Session Cookie 발급) → 이후 요청에서 인증 정보를 활용
-
+<br/>
 위 방식은 기본적으로 세션을 이용하는 방식이며, 브라우저가 세션 쿠키를 저장하여 인증을 유지한다
 
 **하지만 FormLogin 방식에는 단점이 많았다 주요 단점으로는**
-
+<br/>
 - 서버의 세션 관리 부담
     - 사용자가 많아지면 서버가 많은 세션을 관리해야 하므로 메모리 사용량이 증가.
 - CSRF(Cross-Site Request Forgery) 공격에 취약
@@ -160,16 +134,16 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     - 세션 기반 인증은 브라우저 중심으로 설계됨.
 - 서버가 상태를 유지해야 함
     - 서버가 다운되거나 재시작되면 로그인 세션도 사라지는 문제가 있음.
-
+<br/>
 이러한 취약점들을 보완 한것이 JWT 기반 로그인 방식이다
-
+<br/>
 - 서버의 세션 관리 부담 → 브라우저에서 AccessToken 을 직접 관리
 - CSRF 공격에 취약 →  요청마다 Authorization 헤더를 사용하고, 쿠키 기반 인증을 사용하지 않음
 - 모바일 앱과의 연동 어려움 → 모바일, 웹 에서 동일한 방식으로 인증 가능
 - 서버가 상태를 유지해야 함 → 서버는 JWT만 검증하고, 따로 인증을 저장하지 않음 (무상태 인증)
-
+<br/><br/>
 ### **JWT를 활용한 로그인 과정**
-
+<br/>
 - JWT 활용한 회원 인증 과정
     1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
     2. Spring Security가 로그인 요청을 가로챔 
@@ -181,7 +155,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     8. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
 
 위의 과정을 이번에 만들어본 코드와 비교하면 아래와 같다
-
+<br/><br/>
 1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
     
     ```jsx
@@ -220,7 +194,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     ```
     
 
-1. Spring Security가 로그인 요청을 가로챔 
+2. Spring Security가 로그인 요청을 가로챔 
     
     ```java
       // form로그인 방식이아닌 jwt 인증을 먼저 수행하기 위해
@@ -231,7 +205,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
     ```
     
-2. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
+3. 입력된 ID & PW를 DB에서 조회 (UserDetailsService)
     
     ```java
     @Service
@@ -256,7 +230,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     }
     ```
     
-3. 비밀번호 일치 여부 확인 ( BCryptPasswordEncoder )
+4. 비밀번호 일치 여부 확인 ( BCryptPasswordEncoder )
     
     ```java
     @Getter
@@ -283,7 +257,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
         }
     ```
     
-4. 인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
+5. 인증 성공하면 JWT AccessToken, RefreshToken을 생성하여 응답
     
     ```java
     // MemberApiController
@@ -318,7 +292,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     }
     ```
     
-5. 이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
+6. 이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
     
     ```jsx
     let setupAjax = () => {
@@ -336,8 +310,8 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     // Ajax 요청시 브라우저의 로컬스토리지에서 가져온 엑세스토큰을 헤더에 포함시켜 보낸다
     ```
     
-6. 서버에서는( TokenApiService) 를 통해 AccessToken 검증
-7. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
+7. 서버에서는( TokenApiService) 를 통해 AccessToken 검증
+8. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
     
     ```jsx
     @Service

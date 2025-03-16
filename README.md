@@ -9,6 +9,9 @@
 
 [*Spring Security는 인증](https://docs.spring.io/spring-security/reference/features/authentication/index.html) , [권한 부여](https://docs.spring.io/spring-security/reference/features/authorization/index.html) 및 [일반적인 공격에 대한 보호를](https://docs.spring.io/spring-security/reference/features/exploits/index.html) 제공하는 프레임워크입니다 . _ 공식*
 
+
+
+
 1. **spring security 는**
 
 Spring application 에 보안을 적용하는 과정을 크게 간소화시킨 프레임워크이다
@@ -70,6 +73,9 @@ spring security 를 어떻게 이용하면 좋을까?
 
 *어떤 부분을 구성해야하는지 알고 시스템에서 이를 설정하는것은 개발자의 몫이다!  _ 당연한말*
 
+
+
+
 1. **소프트웨어 보안이란?**
 
 현재의 소프트웨어는 상당부분이 민감한 정보일 수 있는 대량의 데이터를 관리한다.
@@ -85,6 +91,9 @@ spring security 를 어떻게 이용하면 좋을까?
 *보안은 뚫릴 수 밖에 없다 그러니 보안을 생각할 때는 악성사용자가 보안을 뚫고 들어왔을때를*
 
 *염두해 두고 어떤식으로 대처하고 데이터를 지킬 것인가 에 대한 고민을 해야한다*
+
+
+
 
 1. **웹 애플리케이션의 일반적인 보안 취약성**
 - 인증 취약성
@@ -154,6 +163,9 @@ spring security 를 어떻게 이용하면 좋을까?
         - `package.json`, `pom.xml` 등에 취약한 패키지가 포함된 경우.
     - **위험성**: 시스템 해킹, 원격 코드 실행.
     - **대응 방법**: **정기적인 보안 업데이트**, `OWASP Dependency-Check`, `Snyk` 같은 보안 도구 활용.
+
+
+
 
 <aside>
 💡

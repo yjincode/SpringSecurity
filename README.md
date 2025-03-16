@@ -140,7 +140,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 - 모바일 앱과의 연동 어려움 → 모바일, 웹 에서 동일한 방식으로 인증 가능
 - 서버가 상태를 유지해야 함 → 서버는 JWT만 검증하고, 따로 인증을 저장하지 않음 (무상태 인증)
 ### **JWT를 활용한 로그인 과정**
-<br/>
+
 - JWT 활용한 회원 인증 과정
     1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)
     2. Spring Security가 로그인 요청을 가로챔 
@@ -150,7 +150,7 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
     6. 이후 사용자는 API 요청 시 AccessToken을 헤더에 포함하여 요청
     7. 서버에서는 ( TokenApiService ) 를 통해 AccessToken 검증
     8. 인증이 유효하면 요청을 정상 처리, 만료되면 RefreshToken을 이용해 새 AccessToken 발급
-
+<br/><br/>
 위의 과정을 이번에 만들어본 코드와 비교하면 아래와 같다
 <br/><br/>
 1. 사용자가 ID, PW 입력 후 로그인 버튼 클릭 (POST /login 요청)

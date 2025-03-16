@@ -100,6 +100,7 @@ spring security 를 어떻게 이용하면 좋을까?
 
 ### **Spring Security Architecture** ( 스프링 시큐리티의 구조 )
 
+
 </aside>
 
-![image.png](attachment:5cb19e8a-1b1f-4774-9c84-8758ddbb87eb:image.png)
+\![Image](https://github.com/user-attachments/assets/bd96eb64-f478-45a4-b55e-443342c85bad)

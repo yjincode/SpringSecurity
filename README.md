@@ -354,3 +354,168 @@ Spring Security의 인증(Authentication)과 인가(Authorization)는 다음과 
 ---
 
 ##
+
+## OAuth2 를 이용한 네이버아이디 로그인
+
+### **OAuth2 로그인 과정**
+
+1. 사용자가 **네이버 로그인 버튼 클릭** → 네이버 로그인 페이지로 이동
+2. 네이버에서 로그인 시 Authorization Code를 받아 **네이버 서버에 Access Token 요청**
+3. 네이버가 **Access Token 발급** → Spring Boot가 사용자 정보 요청
+4. 사용자 정보를 DB를 조회하여 미중복시 DB에 저장
+5. 서버에서 기존과 동일한 방법으로 토큰 생성
+6. 저장된 토큰으로 기존의 JWT 인증 방식으로 로그인
+
+코드 구성은 다음과 같다
+
+### **네이버 로그인 설정 (yml 설정)**
+
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          naver:
+            client-id: 네이버에서 제공한 client-id
+            client-secret: 네이버에서 제공한 client-secret
+            client-name: Naver
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/naver"
+            scope:
+              - name
+        provider:
+          naver:
+            authorization-uri: https://nid.naver.com/oauth2.0/authorize
+            token-uri: https://nid.naver.com/oauth2.0/token
+            user-info-uri: https://openapi.naver.com/v1/nid/me
+            user-name-attribute: response
+
+```
+
+### WebSecurityConfig에 Bean주입
+
+```java
+	@Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                ...중략...
+    .oauth2Login(oauth2 -> oauth2
+			      .loginPage("/login")  // 로그인 페이지 URL 지정
+		        .successHandler(successHandler)  //성공시           
+		        .failureHandler((request, response, exception) -> {
+                   response.sendRedirect("/login");  // 로그인 실패 시 리디렉트
+                        })
+                )
+```
+
+1. 사용자가 **네이버 로그인 버튼 클릭** → 네이버 로그인 페이지로 이동
+    
+    ```jsx
+    $('#naver-signin').click(() => {
+            window.location.href = "/oauth2/authorization/naver"
+    ...생략
+    ```
+    
+2. 네이버에서 로그인 후 **Authorization Code 발급**
+3. 네이버가 **Access Token 발급** → Spring Boot가 사용자 정보 요청
+4. 사용자 정보를 DB를 조회하여 미중복시 DB에 저장
+5. 서버에서 기존과 동일한 방법으로 토큰 생성
+    
+    ```jsx
+    $('#naver-signin').click(() => {
+            window.location.href = "/oauth2/authorization/naver"
+    
+                $.ajax({
+                    url: "/auth/user",
+                    type: "GET",
+                    dataType: "json",
+                    success: (response) => {
+                        if (response.success) {
+                            localStorage.setItem("accessToken", response.token);
+                            console.log("JWT 저장 완료:", response.token);
+    
+                                window.location.href = "/";
+    
+                        } else {
+                            alert("로그인 실패! 다시 시도하세요.");
+                            window.location.href = "/login";
+                        }
+                    },
+                    error: (xhr, status, error) => {
+                        console.error("로그인 정보 요청 오류:", error);
+                        alert("로그인 중 오류가 발생했습니다.");
+                        window.location.href = "/login";
+                    }
+                });
+        });
+    ```
+    
+    발급받은 유저 정보가 담긴 Code 는 CustomOAuth2UserService 에서 처리된다
+    
+    ```jsx
+    
+    @RequiredArgsConstructor
+    public class CustomOAuth2User implements OAuth2User {
+    
+        private final Member member;
+        private final String jwtToken;
+        private final String refreshToken;
+    ...생략
+    ```
+    
+    ```jsx
+    @RestController
+    @RequestMapping("/auth")
+    public class SocialUserApiController {
+    
+        @GetMapping("/user")
+        public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
+            if (customOAuth2User == null) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+            }
+    
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "token", customOAuth2User.getJwtToken(),
+                    "user", customOAuth2User.getAttributes()
+            ));
+        }
+    ```
+    
+    ```jsx
+    @Service
+    @RequiredArgsConstructor
+    public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+    
+        private final MemberMapper memberMapper;
+        private final TokenProvider tokenProvider;
+    
+        @Override
+        public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+            OAuth2User oAuth2User = super.loadUser(userRequest);
+    
+            Map<String, Object> response = (Map<String, Object>) oAuth2User.getAttributes().get("response");
+            String userId = (String) response.get("id");
+            String name = (String) response.get("name");
+    
+            Member existingMember = memberMapper.findByUserIdAndProvider(userId, Provider.naver.name());
+    
+            if (existingMember == null) {
+                Member newMember = Member.builder()
+                        .userId(userId)  // 네이버에서 받은 고유 ID 저장
+                        .userName(name)  // 네이버에서 가져온 유저 이름
+                        .oauthProvider(Provider.naver)
+                        .build();
+    
+                memberMapper.insertOAuthMember(newMember);
+                existingMember = newMember;  // 이후 처리 위해 변수 업데이트
+            }
+            String accessToken = tokenProvider.generateToken(existingMember,  Duration.ofHours(2));
+            String refreshToken = tokenProvider.generateToken(existingMember, Duration.ofDays(2));
+    
+            return new CustomOAuth2User(existingMember, accessToken, refreshToken);
+        }
+    
+    }
+    ```
